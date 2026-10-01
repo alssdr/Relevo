@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relevo · Materiales de estudio entre estudiantes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{ink:'#1F1F21',guinda:'#6B1A2F',bruma:'#F1F3F2',linea:'#D9DCDB'},fontFamily:{display:['"Bodoni Moda"','serif'],sans:['"Hanken Grotesk"','sans-serif']}}}}</script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>body{background:#F1F3F2;color:#1F1F21}:focus-visible{outline:2px solid #6B1A2F;outline-offset:2px}</style>
+</head>
+<body class="font-sans">
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo}=React;
+const P={search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',file:'<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/>',calc:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',check:'<path d="M20 6 9 17l-5-5"/>',plus:'<path d="M5 12h14M12 5v14"/>',filter:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',bag:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>'};
+const I=({n,s=20,c=''})=><svg className={c} width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML={{__html:P[n]}}/>;
+
+const Logo=({size='text-3xl'})=><span className={`font-display ${size} tracking-tight leading-none`} aria-label="relevo">re<span className="text-guinda font-medium">l</span>evo</span>;
+
+const CATS=[{id:'Libros',icon:'book',label:'Libros y textos',tone:'#E4E0D8'},{id:'Maquetas',icon:'box',label:'Arquitectura y maquetas',tone:'#DDE2E0'},{id:'Calculadoras',icon:'calc',label:'Ingeniería y calculadoras',tone:'#E2DADC'},{id:'Útiles',icon:'pen',label:'Útiles e indumentaria',tone:'#E6E3DA'},{id:'Apuntes PDF',icon:'file',label:'Apuntes digitales PDF',tone:'#DCDFE3'}];
+const UNIS=['UPC','PUCP','U de Lima','UTP'];
+const CARRERAS=['Arquitectura','Ingeniería Civil','Ingeniería Industrial','Administración','Derecho','Medicina'];
+const CURSOS=['Cálculo 1','Estática','Diseño Arquitectónico 2','Contabilidad General','Física 2','Administración de Operaciones','Anatomía','Derecho Civil'];
+const PTS=[['Biblioteca','Mostrador de atención, piso 1'],['Cafetería','Zona de mesas junto a la entrada'],['Pabellón','Hall principal, frente a seguridad']];
+
+const seed=[
+{id:1,title:'Cálculo de una variable, Stewart (8.ª ed.)',cat:'Libros',price:85,uni:'PUCP',carrera:'Ingeniería Civil',course:'Cálculo 1',cond:'Bueno',seller:'Valeria M.',rating:4.9,sales:14,ciclo:'II'},
+{id:2,title:'Maqueta de sitio escala 1:200, base de MDF',cat:'Maquetas',price:60,uni:'UPC',carrera:'Arquitectura',course:'Diseño Arquitectónico 2',cond:'Excelente',seller:'Diego R.',rating:4.7,sales:6,ciclo:'IV'},
+{id:3,title:'Calculadora Casio fx-991LA CW',cat:'Calculadoras',price:70,uni:'UTP',carrera:'Ingeniería Industrial',course:'Física 2',cond:'Excelente',seller:'Camila S.',rating:5,sales:9,ciclo:'III'},
+{id:4,title:'Apuntes de Contabilidad General, ciclos 1 y 2 (PDF)',cat:'Apuntes PDF',price:12,uni:'U de Lima',carrera:'Administración',course:'Contabilidad General',cond:'Excelente',seller:'Mateo L.',rating:4.8,sales:31,ciclo:'II'},
+{id:5,title:'Mandil blanco talla M, uso de un ciclo',cat:'Útiles',price:35,uni:'UPC',carrera:'Medicina',course:'Anatomía',cond:'Bueno',seller:'Lucía P.',rating:4.6,sales:3,ciclo:'I'},
+{id:6,title:'Mecánica vectorial para ingenieros: Estática, Beer',cat:'Libros',price:95,uni:'UTP',carrera:'Ingeniería Civil',course:'Estática',cond:'Desgastado',seller:'Andrés V.',rating:4.5,sales:5,ciclo:'III'},
+{id:7,title:'Juego de escalímetros y reglas paralelas',cat:'Útiles',price:45,uni:'PUCP',carrera:'Arquitectura',course:'Diseño Arquitectónico 2',cond:'Bueno',seller:'Sofía T.',rating:4.9,sales:11,ciclo:'II'},
+{id:8,title:'Resumen de Administración de Operaciones: EOQ y MRP (PDF)',cat:'Apuntes PDF',price:15,uni:'UPC',carrera:'Ingeniería Industrial',course:'Administración de Operaciones',cond:'Excelente',seller:'Renzo C.',rating:4.8,sales:22,ciclo:'VI'},
+{id:9,title:'Código Civil comentado, edición actualizada',cat:'Libros',price:120,uni:'U de Lima',carrera:'Derecho',course:'Derecho Civil',cond:'Bueno',seller:'Paola H.',rating:4.7,sales:7,ciclo:'III'}];
+
+const Stars=({v})=><span className="inline-flex items-center gap-1 text-sm"><I n="star" s={14} c="fill-guinda text-guinda"/>{v.toFixed(1)}</span>;
+const Photo=({p,big})=>{const c=CATS.find(x=>x.id===p.cat);return <div className={`relative flex items-center justify-center ${big?'h-56':'h-40'} rounded-xl overflow-hidden`} style={{background:c.tone}}><div className="absolute inset-0 opacity-40" style={{backgroundImage:'repeating-linear-gradient(135deg,transparent 0 14px,rgba(31,31,33,.06) 14px 15px)'}}/><I n={c.icon} s={big?64:44} c="text-ink/50 relative"/><span className="absolute left-3 bottom-3 text-xs bg-white/80 rounded-full px-2 py-0.5">{p.cond}</span></div>};
+
+const Card=({p,open})=><button onClick={()=>open(p)} className="text-left bg-white border border-linea rounded-2xl p-3 hover:border-guinda transition-colors w-full">
+<Photo p={p}/><div className="pt-3 px-1 pb-1"><h3 className="font-medium leading-snug min-h-[2.75rem]">{p.title}</h3>
+<div className="flex items-baseline justify-between mt-2"><span className="font-display text-2xl">S/ {p.price}</span><Stars v={p.rating}/></div>
+<p className="text-sm text-ink/60 mt-1">{p.uni} · {p.carrera}</p><p className="text-sm text-ink/60">Vendedor: {p.seller}</p></div></button>;
+
+function App(){
+const [view,setView]=useState('home');const [items,setItems]=useState(seed);
+const [q,setQ]=useState('');const [unis,setUnis]=useState([]);const [car,setCar]=useState('');const [cat,setCat]=useState('');const [max,setMax]=useState(150);const [fOpen,setFOpen]=useState(false);
+const [sel,setSel]=useState(null);const [co,setCo]=useState(null);const [toast,setToast]=useState('');
+const [heroQ,setHeroQ]=useState('');
+const go=v=>{setView(v);window.scrollTo(0,0)};
+const shout=m=>{setToast(m);setTimeout(()=>setToast(''),2800)};
+const list=useMemo(()=>{const t=q.trim().toLowerCase();return items.filter(p=>(!t||[p.title,p.course,p.carrera,p.cat,p.uni].join(' ').toLowerCase().includes(t))&&(!unis.length||unis.includes(p.uni))&&(!car||p.carrera===car)&&(!cat||p.cat===cat)&&p.price<=max)},[items,q,unis,car,cat,max]);
+const clear=()=>{setQ('');setUnis([]);setCar('');setCat('');setMax(150)};
+const nav=[['home','Inicio'],['explore','Explorar'],['sell','Vender']];
+
+return <div className="min-h-screen">
+<header className="sticky top-0 z-30 bg-bruma/90 backdrop-blur border-b border-linea"><div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+<button onClick={()=>go('home')} aria-label="Ir al inicio"><Logo/></button>
+<nav className="flex items-center gap-1">{nav.map(([k,l])=><button key={k} onClick={()=>go(k)} className={`px-3 py-2 rounded-full text-sm ${view===k?'bg-ink text-white':'hover:bg-white'}`}>{l}</button>)}</nav>
+<div className="hidden sm:flex items-center gap-2 text-sm"><I n="bag"/><span className="w-9 h-9 rounded-full bg-guinda text-white flex items-center justify-center"><I n="user" s={18}/></span></div></div></header>
+
+{view==='home'&&<main>
+<section className="max-w-6xl mx-auto px-4 pt-14 pb-12 grid lg:grid-cols-5 gap-10 items-center">
+<div className="lg:col-span-3"><h1 className="font-display text-5xl md:text-7xl leading-[1.02] tracking-tight">Lo que ya usaste, <br/>le sirve a quien sigue.</h1>
+<p className="mt-5 text-lg text-ink/70 max-w-xl">Compra y vende libros, maquetas, calculadoras y apuntes con estudiantes de ciclos anteriores. Entrega en puntos seguros de tu campus.</p>
+<form onSubmit={e=>{e.preventDefault();setQ(heroQ);go('explore')}} className="mt-7 flex gap-2 bg-white border border-linea rounded-full p-1.5 max-w-xl">
+<label className="flex items-center gap-2 flex-1 pl-4"><I n="search" c="text-ink/50"/><input value={heroQ} onChange={e=>setHeroQ(e.target.value)} placeholder="Busca por curso, carrera o material" className="w-full bg-transparent outline-none py-2"/></label>
+<button className="bg-guinda text-white rounded-full px-6 py-2.5 font-medium">Buscar</button></form>
+<div className="mt-4 flex flex-wrap gap-2 text-sm">{['Cálculo 1','Estática','Maquetas'].map(s=><button key={s} onClick={()=>{setQ(s);go('explore')}} className="px-3 py-1 rounded-full border border-linea hover:border-guinda">{s}</button>)}</div></div>
+<div className="lg:col-span-2 bg-white border border-linea rounded-3xl p-6 space-y-4">
+{[['shield','Vendedores verificados','Cada cuenta se valida con correo institucional.'],['pin','Entrega dentro del campus','Biblioteca, cafetería o pabellón: lugares con gente y seguridad.'],['pen','Publicar toma un minuto','Elige el curso, el estado y listo.']].map(([i,t,d])=><div key={t} className="flex gap-3"><span className="w-10 h-10 shrink-0 rounded-full bg-bruma flex items-center justify-center text-guinda"><I n={i}/></span><div><p className="font-medium">{t}</p><p className="text-sm text-ink/60">{d}</p></div></div>)}</div></section>
+
+<section className="max-w-6xl mx-auto px-4 py-8"><h2 className="font-display text-3xl mb-5">Categorías</h2>
+<div className="grid grid-cols-2 md:grid-cols-5 gap-3">{CATS.map(c=><button key={c.id} onClick={()=>{clear();setCat(c.id);go('explore')}} className="bg-white border border-linea rounded-2xl p-4 text-left hover:border-guinda"><span className="w-11 h-11 rounded-xl flex items-center justify-center mb-6" style={{background:c.tone}}><I n={c.icon}/></span><span className="text-sm font-medium">{c.label}</span></button>)}</div></section>
+
+<section className="max-w-6xl mx-auto px-4 py-8 pb-16"><div className="flex items-end justify-between mb-5"><h2 className="font-display text-3xl">Recién publicados en tu campus</h2><button onClick={()=>{clear();go('explore')}} className="text-sm text-guinda underline underline-offset-4">Ver todo</button></div>
+<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{items.slice(-6).reverse().map(p=><Card key={p.id} p={p} open={setSel}/>)}</div></section></main>}
+
+{view==='explore'&&<main className="max-w-6xl mx-auto px-4 py-8">
+<h1 className="font-display text-4xl mb-5">Explorar materiales</h1>
+<div className="flex gap-2 mb-6"><label className="flex items-center gap-2 flex-1 bg-white border border-linea rounded-full px-4"><I n="search" c="text-ink/50"/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Busca por curso, carrera o material" className="w-full bg-transparent outline-none py-3"/></label>
+<button onClick={()=>setFOpen(!fOpen)} className="lg:hidden flex items-center gap-2 px-4 rounded-full border border-linea bg-white"><I n="filter" s={16}/>Filtros</button></div>
+<div className="grid lg:grid-cols-4 gap-6">
+<aside className={`${fOpen?'block':'hidden'} lg:block bg-white border border-linea rounded-2xl p-5 h-fit space-y-6`}>
+<fieldset><legend className="font-medium mb-2">Universidad</legend>{UNIS.map(u=><label key={u} className="flex items-center gap-2 py-1 text-sm"><input type="checkbox" className="accent-[#6B1A2F]" checked={unis.includes(u)} onChange={()=>setUnis(unis.includes(u)?unis.filter(x=>x!==u):[...unis,u])}/>{u}</label>)}</fieldset>
+<label className="block"><span className="font-medium block mb-2">Carrera</span><select value={car} onChange={e=>setCar(e.target.value)} className="w-full border border-linea rounded-xl p-2 text-sm bg-white"><option value="">Todas</option>{CARRERAS.map(c=><option key={c}>{c}</option>)}</select></label>
+<label className="block"><span className="font-medium block mb-2">Tipo de material</span><select value={cat} onChange={e=>setCat(e.target.value)} className="w-full border border-linea rounded-xl p-2 text-sm bg-white"><option value="">Todos</option>{CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
+<label className="block"><span className="font-medium flex justify-between mb-2">Precio máximo<span className="font-normal">S/ {max}</span></span><input type="range" min="10" max="150" step="5" value={max} onChange={e=>setMax(+e.target.value)} className="w-full accent-[#6B1A2F]"/></label>
+<button onClick={clear} className="text-sm text-guinda underline underline-offset-4">Quitar filtros</button></aside>
+<section className="lg:col-span-3"><p className="text-sm text-ink/60 mb-3">{list.length} {list.length===1?'resultado':'resultados'}</p>
+{list.length?<div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">{list.map(p=><Card key={p.id} p={p} open={setSel}/>)}</div>:<div className="bg-white border border-linea rounded-2xl p-10 text-center"><p className="font-display text-2xl mb-1">No hay materiales con esos filtros</p><p className="text-ink/60 mb-4">Prueba con otro curso o quita algún filtro.</p><button onClick={clear} className="bg-guinda text-white rounded-full px-5 py-2">Quitar filtros</button></div>}</section></div></main>}
+
+{view==='sell'&&<Sell items={items} add={p=>{setItems([...items,p]);shout('Publicado: ya aparece en Explorar');}} open={setSel} go={go}/>}
+
+<footer className="border-t border-linea py-8 text-center text-sm text-ink/60"><Logo size="text-2xl"/><p className="mt-2">Prototipo de Relevo · Los datos son de ejemplo</p></footer>
+
+{sel&&!co&&<Modal close={()=>setSel(null)} title="Detalle del material"><Photo p={sel} big/>
+<h2 className="font-display text-3xl mt-4 leading-tight">{sel.title}</h2>
+<p className="font-display text-3xl text-guinda mt-1">S/ {sel.price}</p>
+<dl className="grid grid-cols-2 gap-3 text-sm mt-4">{[['Estado real',sel.cond],['Curso',sel.course],['Ciclo',sel.ciclo],['Universidad',sel.uni],['Carrera',sel.carrera],['Tipo',sel.cat]].map(([k,v])=><div key={k} className="bg-bruma rounded-xl p-3"><dt className="text-ink/60">{k}</dt><dd className="font-medium">{v}</dd></div>)}</dl>
+<div className="border border-linea rounded-2xl p-4 mt-4 flex items-center gap-3"><span className="w-11 h-11 rounded-full bg-guinda text-white flex items-center justify-center"><I n="user"/></span><div className="flex-1"><p className="font-medium">{sel.seller}</p><p className="text-sm text-ink/60 flex items-center gap-1"><I n="shield" s={15} c="text-guinda"/>Verificado con correo institucional de {sel.uni}</p></div><div className="text-right"><Stars v={sel.rating}/><p className="text-xs text-ink/60">{sel.sales} ventas</p></div></div>
+<button onClick={()=>setCo({step:1,pt:'',m:'',h:''})} className="w-full mt-5 bg-guinda text-white rounded-full py-3 font-medium flex items-center justify-center gap-2"><I n="pin" s={18}/>Coordinar en campus</button></Modal>}
+
+{sel&&co&&<Modal close={()=>{setCo(null);setSel(null)}} title="Coordinar en campus">
+{co.step===1?<div className="space-y-5">
+<p className="text-sm text-ink/70">{sel.title} · <b>S/ {sel.price}</b> · {sel.seller}</p>
+<div><p className="font-medium mb-2">Punto de encuentro en {sel.uni}</p><div className="space-y-2">{PTS.map(([n,d])=><button key={n} onClick={()=>setCo({...co,pt:n})} className={`w-full text-left border rounded-xl p-3 flex items-center gap-3 ${co.pt===n?'border-guinda bg-guinda/5':'border-linea'}`}><I n="pin" c="text-guinda"/><span><span className="font-medium block">{n}</span><span className="text-sm text-ink/60">{d}</span></span></button>)}</div></div>
+<div><p className="font-medium mb-2">Forma de pago</p><div className="grid grid-cols-2 gap-2">{['Pago contra entrega','Transferencia directa'].map(m=><button key={m} onClick={()=>setCo({...co,m})} className={`border rounded-xl p-3 text-sm ${co.m===m?'border-guinda bg-guinda/5':'border-linea'}`}>{m}</button>)}</div></div>
+<label className="block"><span className="font-medium block mb-2">Horario</span><select value={co.h} onChange={e=>setCo({...co,h:e.target.value})} className="w-full border border-linea rounded-xl p-3 bg-white"><option value="">Elige un horario</option>{['10:00 a. m.','1:00 p. m.','4:00 p. m.'].map(h=><option key={h}>{h}</option>)}</select></label>
+<button disabled={!co.pt||!co.m||!co.h} onClick={()=>setCo({...co,step:2,code:'RLV-'+Math.floor(1000+Math.random()*9000)})} className="w-full bg-guinda text-white rounded-full py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"><I n="lock" s={18}/>Confirmar encuentro</button></div>
+:<div className="text-center py-4"><span className="w-14 h-14 mx-auto rounded-full bg-guinda text-white flex items-center justify-center"><I n="check" s={28}/></span>
+<h2 className="font-display text-3xl mt-4">Encuentro confirmado</h2>
+<p className="text-ink/70 mt-2">{co.pt} de {sel.uni}, hoy a las {co.h}. {co.m==='Pago contra entrega'?'Pagas al recibir el material.':'Transfieres cuando estén juntos y revises el material.'}</p>
+<div className="bg-bruma rounded-2xl p-4 mt-5"><p className="text-sm text-ink/60">Código de entrega</p><p className="font-display text-4xl tracking-widest">{co.code}</p><p className="text-sm text-ink/60 mt-1">Muéstralo a {sel.seller} al encontrarse.</p></div>
+<button onClick={()=>{setCo(null);setSel(null);go('explore')}} className="mt-5 border border-linea rounded-full px-6 py-2.5">Seguir explorando</button></div>}
+</Modal>}
+
+{toast&&<div role="status" className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-ink text-white rounded-full px-5 py-3 text-sm z-50 flex items-center gap-2"><I n="check" s={16}/>{toast}</div>}
+</div>}
+
+function Modal({title,close,children}){return <div className="fixed inset-0 z-40 bg-ink/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={close}><div role="dialog" aria-modal="true" aria-label={title} onClick={e=>e.stopPropagation()} className="bg-white w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-5"><div className="flex justify-between items-center mb-3"><span className="text-sm text-ink/60">{title}</span><button onClick={close} aria-label="Cerrar" className="w-9 h-9 rounded-full hover:bg-bruma flex items-center justify-center"><I n="x"/></button></div>{children}</div></div>}
+
+function Sell({items,add,open,go}){
+const empty={title:'',cat:'Libros',cond:'Bueno',price:'',course:CURSOS[0],ciclo:'I'};
+const [f,setF]=useState(empty);const [err,setErr]=useState('');
+const mine=items.filter(p=>p.seller==='Tú');
+const sug={Libros:60,Maquetas:50,Calculadoras:60,Útiles:30,'Apuntes PDF':12};
+const base=sug[f.cat]*({Excelente:1,Bueno:.8,Desgastado:.55}[f.cond]);
+const set=k=>e=>setF({...f,[k]:e.target.value});
+const pub=e=>{e.preventDefault();if(f.title.trim().length<4||!f.price){setErr('Escribe un título y un precio para publicar.');return}setErr('');
+add({id:Date.now(),title:f.title.trim(),cat:f.cat,price:+f.price,uni:'UPC',carrera:'Ingeniería Industrial',course:f.course,cond:f.cond,seller:'Tú',rating:5,sales:0,ciclo:f.ciclo});setF(empty)};
+const inp="w-full border border-linea rounded-xl p-3 bg-white";
+return <main className="max-w-6xl mx-auto px-4 py-8 grid lg:grid-cols-5 gap-8">
+<form onSubmit={pub} className="lg:col-span-3 bg-white border border-linea rounded-3xl p-6 space-y-4">
+<div><h1 className="font-display text-4xl">Publica en un minuto</h1><p className="text-ink/60 mt-1">Cuatro datos y tu material ya está en el campus.</p></div>
+<label className="block"><span className="font-medium block mb-1">Título</span><input value={f.title} onChange={set('title')} placeholder="Ej: Física Universitaria, Sears Zemansky" className={inp}/></label>
+<div className="grid sm:grid-cols-2 gap-4"><label><span className="font-medium block mb-1">Categoría</span><select value={f.cat} onChange={set('cat')} className={inp}>{CATS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
+<label><span className="font-medium block mb-1">Curso</span><select value={f.course} onChange={set('course')} className={inp}>{CURSOS.map(c=><option key={c}>{c}</option>)}</select></label></div>
+<div><span className="font-medium block mb-1">Estado</span><div className="grid grid-cols-3 gap-2">{['Excelente','Bueno','Desgastado'].map(s=><button type="button" key={s} onClick={()=>setF({...f,cond:s})} className={`border rounded-xl py-2.5 text-sm ${f.cond===s?'border-guinda bg-guinda/5 font-medium':'border-linea'}`}>{s}</button>)}</div></div>
+<div className="grid sm:grid-cols-2 gap-4"><label><span className="font-medium block mb-1">Ciclo</span><select value={f.ciclo} onChange={set('ciclo')} className={inp}>{['I','II','III','IV','V','VI','VII','VIII','IX','X'].map(c=><option key={c}>{c}</option>)}</select></label>
+<label><span className="font-medium block mb-1">Precio (S/)</span><input type="number" min="1" value={f.price} onChange={set('price')} className={inp}/></label></div>
+<button type="button" onClick={()=>setF({...f,price:Math.round(base)})} className="text-sm text-guinda underline underline-offset-4">Usar precio sugerido: S/ {Math.round(base)}</button>
+{err&&<p className="text-sm text-guinda" role="alert">{err}</p>}
+<button className="w-full bg-guinda text-white rounded-full py-3.5 font-medium flex items-center justify-center gap-2"><I n="plus" s={18}/>Publicar ahora</button></form>
+<aside className="lg:col-span-2"><h2 className="font-display text-2xl mb-3">Tus publicaciones</h2>
+{mine.length?<div className="space-y-3">{mine.map(p=><button key={p.id} onClick={()=>open(p)} className="w-full text-left bg-white border border-linea rounded-2xl p-4 hover:border-guinda"><p className="font-medium">{p.title}</p><p className="text-sm text-ink/60">{p.cond} · {p.course} · <b>S/ {p.price}</b></p></button>)}<button onClick={()=>go('explore')} className="text-sm text-guinda underline underline-offset-4">Verlas en Explorar</button></div>
+:<div className="border border-dashed border-linea rounded-2xl p-6 text-ink/60">Aún no publicaste nada. Completa el formulario y aparecerá aquí.</div>}</aside></main>}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
