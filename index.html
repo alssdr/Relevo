@@ -44,7 +44,7 @@ const Badge=({inst})=><span className="inline-flex items-center gap-1 text-sm te
 const Card=({p,open,ventas})=><button onClick={()=>open(p)} className="text-left bg-white border border-linea rounded-2xl p-3 hover:border-guinda transition-colors w-full">
 <Photo p={p}/><div className="pt-3 px-1 pb-1"><h3 className="font-medium leading-snug min-h-[2.75rem]">{p.title}</h3>
 <span className="font-display text-2xl block mt-2">S/ {p.price}</span>
-<p className="text-sm text-ink/60 mt-1">{p.uni} · {p.carrera}</p><p className="text-sm text-ink/60">{p.ownerName} · {ventas(p.ownerId)} ventas</p></div></button>;
+<p className="text-sm text-ink/60 mt-1">{p.uni} · {p.carrera}</p><p className="text-sm text-ink/60">{p.ownerName} · {ventas(p.ownerId)} ventas</p>{p._pending&&<p className="text-xs text-guinda mt-1">Guardando en la base de datos…</p>}</div></button>;
 const Empty=({t,d,b,f})=><div className="bg-white border border-linea rounded-2xl p-10 text-center"><p className="font-display text-2xl mb-1">{t}</p><p className="text-ink/60 mb-4">{d}</p>{b&&<button onClick={f} className="bg-guinda text-white rounded-full px-5 py-2">{b}</button>}</div>;
 
 function App(){
@@ -54,7 +54,8 @@ const [q,setQ]=useState('');const [unis,setUnis]=useState([]);const [car,setCar]
 const [sel,setSel]=useState(null);const [co,setCo]=useState(null);const [toast,setToast]=useState('');const [heroQ,setHeroQ]=useState('');
 const shout=m=>{setToast(m);setTimeout(()=>setToast(''),3000)};
 const go=v=>{setView(v);setFOpen(false);window.scrollTo(0,0)};
-useEffect(()=>db.collection('products').orderBy('createdAt','desc').onSnapshot(s=>{setDbErr('');setItems(s.docs.map(d=>({id:d.id,...d.data()})))},e=>setDbErr(e.code||'error')),[]);
+useEffect(()=>db.collection('products').orderBy('createdAt','desc').onSnapshot({includeMetadataChanges:true},s=>{setItems(s.docs.map(d=>({id:d.id,_pending:d.metadata.hasPendingWrites,...d.data()})))},e=>setDbErr(e.code||'error')),[]);
+useEffect(()=>{let ok=false;const t=setTimeout(()=>{if(!ok)setDbErr('timeout')},8000);db.collection('products').limit(1).get({source:'server'}).then(()=>{ok=true;clearTimeout(t);setDbErr('')}).catch(e=>{ok=true;clearTimeout(t);setDbErr(e.code||'error')});return()=>clearTimeout(t)},[]);
 useEffect(()=>firebase.auth().onAuthStateChanged(u=>{if(!u){setUser(null);setProfile({});return}
 setUser({uid:u.uid,name:u.displayName||'Estudiante',photo:u.photoURL,inst:isInst(u.email)});
 const ref=db.collection('users').doc(u.uid);ref.get().then(d=>{if(!d.exists)ref.set({name:u.displayName||'Estudiante',photo:u.photoURL||'',inst:isInst(u.email)})});ref.onSnapshot(d=>setProfile(d.data()||{}))}),[]);
@@ -63,7 +64,7 @@ const l1=db.collection('orders').where('buyerId','==',user.uid).onSnapshot(push,
 const login=async()=>{try{await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(e){shout('No se pudo iniciar sesión. Intenta de nuevo')}};
 const me=user&&{...user,name:profile.name||user.name,inst:profile.inst!==undefined?profile.inst:user.inst};
 const ventas=id=>items.filter(p=>p.ownerId===id&&p.status==='vendido').length;
-const active=items.filter(p=>p.status!=='vendido');
+const active=items.filter(p=>p.status!=='vendido'&&p.status!=='reservado');
 const L={unis:uniq(UNIS0,items.map(p=>p.uni)),carr:uniq(CARR0,items.map(p=>p.carrera)),curs:uniq(CURS0,items.map(p=>p.course))};
 const list=useMemo(()=>{const t=q.trim().toLowerCase();return active.filter(p=>(!t||[p.title,p.course,p.carrera,p.cat,p.uni,p.desc].join(' ').toLowerCase().includes(t))&&(!unis.length||unis.includes(p.uni))&&(!car||p.carrera===car)&&(!cat||p.cat===cat)&&p.price<=max)},[items,q,unis,car,cat,max]);
 const clear=()=>{setQ('');setUnis([]);setCar('');setCat('');setMax(500)};
@@ -77,7 +78,7 @@ return <div className="min-h-screen">
 <nav className="flex items-center gap-1 order-3 sm:order-2 w-full sm:w-auto overflow-x-auto">{nav.map(([k,l])=><button key={k} onClick={()=>go(k)} className={`px-3 py-2 rounded-full text-sm whitespace-nowrap ${view===k?'bg-ink text-white':'hover:bg-white'}`}>{l}</button>)}</nav>
 <div className="flex items-center gap-2 text-sm order-2 sm:order-3">{user?<><button onClick={()=>openProf(user.uid)} className="flex items-center gap-2 rounded-full hover:bg-white pr-3" aria-label="Mi perfil">{user.photo?<img src={user.photo} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full"/>:<span className="w-9 h-9 rounded-full bg-guinda text-white flex items-center justify-center"><I n="user" s={18}/></span>}<span className="hidden sm:inline max-w-[8rem] truncate">{me.name.split(' ')[0]}</span></button><button onClick={()=>{firebase.auth().signOut();go('home')}} className="px-3 py-2 rounded-full border border-linea hover:bg-white">Salir</button></>:<button onClick={login} className="px-4 py-2 rounded-full bg-guinda text-white flex items-center gap-2"><I n="user" s={16}/>Ingresar</button>}</div></div></header>
 
-{dbErr&&<div role="alert" className="bg-guinda text-white text-sm text-center px-4 py-2">{dbErr==='permission-denied'?'La base de datos todavía no permite leer. Falta activar Firestore y pegar sus reglas.':'No se pudo cargar la base de datos ('+dbErr+').'}</div>}
+{dbErr&&<div role="alert" className="bg-guinda text-white text-sm text-center px-4 py-2">{dbErr==='permission-denied'?'Las reglas de Firestore no permiten leer ni guardar. Pega y publica las reglas en Firebase → Firestore → Reglas.':dbErr==='timeout'||dbErr==='unavailable'||dbErr==='not-found'?'No hay conexión con la base de datos. Crea Firestore en Firebase (Firestore Database → Crear base de datos) y recarga. Mientras tanto, lo que publiques NO se guarda.':'No se pudo conectar con la base de datos ('+dbErr+').'}</div>}
 
 {view==='home'&&<main>
 <section className="max-w-6xl mx-auto px-4 pt-14 pb-12 grid lg:grid-cols-5 gap-10 items-center">
@@ -119,7 +120,7 @@ return <div className="min-h-screen">
 {sel.desc&&<p className="text-ink/70 mt-2">{sel.desc}</p>}
 <dl className="grid grid-cols-2 gap-3 text-sm mt-4">{[['Estado real',sel.cond],['Curso',sel.course],['Ciclo',sel.ciclo],['Universidad',sel.uni],['Carrera',sel.carrera],['Tipo',sel.cat]].map(([k,v])=><div key={k} className="bg-bruma rounded-xl p-3"><dt className="text-ink/60">{k}</dt><dd className="font-medium">{v}</dd></div>)}</dl>
 <button onClick={()=>openProf(sel.ownerId)} className="w-full text-left border border-linea rounded-2xl p-4 mt-4 flex items-center gap-3 hover:border-guinda"><span className="w-11 h-11 rounded-full bg-guinda text-white flex items-center justify-center"><I n="user"/></span><span className="flex-1"><span className="font-medium block">{sel.ownerName}</span><Badge inst={sel.ownerInst}/></span><span className="text-sm text-right"><b>{ventas(sel.ownerId)}</b> ventas<br/><span className="text-guinda underline underline-offset-4">Ver perfil</span></span></button>
-{user&&sel.ownerId===user.uid?<p className="mt-5 text-center text-ink/60">Esta es tu publicación.</p>:sel.status==='vendido'?<p className="mt-5 text-center text-ink/60">Este material ya fue vendido.</p>:<button onClick={()=>user?setCo({step:1,pt:'',m:'',h:''}):login()} className="w-full mt-5 bg-guinda text-white rounded-full py-3 font-medium flex items-center justify-center gap-2"><I n={user?'pin':'lock'} s={18}/>{user?'Coordinar en campus':'Ingresa para coordinar'}</button>}</Modal>}
+{user&&sel.ownerId===user.uid?<p className="mt-5 text-center text-ink/60">Esta es tu publicación.</p>:(sel.status==='vendido'||sel.status==='reservado')?<p className="mt-5 text-center text-ink/60">{sel.status==='vendido'?'Este material ya fue vendido.':'Este material ya fue reservado por otra persona.'}</p>:<button onClick={()=>user?setCo({step:1,pt:'',m:'',h:''}):login()} className="w-full mt-5 bg-guinda text-white rounded-full py-3 font-medium flex items-center justify-center gap-2"><I n={user?'pin':'lock'} s={18}/>{user?'Coordinar en campus':'Ingresa para coordinar'}</button>}</Modal>}
 
 {sel&&co&&<Checkout sel={sel} co={co} setCo={setCo} me={me} close={()=>{setCo(null);setSel(null)}} go={go} shout={shout}/>}
 {toast&&<div role="status" className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-ink text-white rounded-full px-5 py-3 text-sm z-50 flex items-center gap-2"><I n="check" s={16}/>{toast}</div>}
@@ -131,7 +132,9 @@ function Gate({login,t,d}){return <main className="max-w-md mx-auto px-4 py-20 t
 function Checkout({sel,co,setCo,me,close,go,shout}){
 const [busy,setBusy]=useState(false);
 const confirm=async()=>{setBusy(true);const code='RLV-'+Math.floor(1000+Math.random()*9000);
-try{await db.collection('orders').add({productId:sel.id,title:sel.title,price:sel.price,uni:sel.uni,sellerId:sel.ownerId,sellerName:sel.ownerName,buyerId:me.uid,buyerName:me.name,point:co.pt,method:co.m,hour:co.h,code,status:'pendiente',createdAt:TS()});setCo({...co,step:2,code})}catch(e){shout('No se pudo crear el pedido. Intenta de nuevo')}setBusy(false)};
+try{await db.runTransaction(async tx=>{const pr=db.collection('products').doc(sel.id);const ps=await tx.get(pr);if(!ps.exists||ps.data().status!=='activo')throw new Error('taken');
+tx.update(pr,{status:'reservado'});tx.set(db.collection('orders').doc(),{productId:sel.id,title:sel.title,price:sel.price,uni:sel.uni,sellerId:sel.ownerId,sellerName:sel.ownerName,buyerId:me.uid,buyerName:me.name,point:co.pt,method:co.m,hour:co.h,code,status:'pendiente',createdAt:TS()})});setCo({...co,step:2,code})}
+catch(e){if(e.message==='taken'){shout('Otra persona ya reservó este material');close()}else shout('No se pudo crear el pedido. Intenta de nuevo')}setBusy(false)};
 return <Modal close={close} title="Coordinar en campus">
 {co.step===1?<div className="space-y-5">
 <p className="text-sm text-ink/70">{sel.title} · <b>S/ {sel.price}</b> · {sel.ownerName}</p>
@@ -149,7 +152,7 @@ function Orders({me,orders,shout}){
 const [codes,setCodes]=useState({});
 const buys=orders.filter(o=>o.buyerId===me.uid),sells=orders.filter(o=>o.sellerId===me.uid);
 const chip=s=><span className={`text-xs rounded-full px-2 py-0.5 border ${s==='completado'?'bg-guinda text-white border-guinda':s==='cancelado'?'text-ink/50 border-linea':'border-guinda text-guinda'}`}>{s}</span>;
-const cancel=o=>db.collection('orders').doc(o.id).update({status:'cancelado'}).catch(()=>shout('No se pudo cancelar'));
+const cancel=async o=>{try{const b=db.batch();b.update(db.collection('orders').doc(o.id),{status:'cancelado'});b.update(db.collection('products').doc(o.productId),{status:'activo'});await b.commit();shout('Pedido cancelado: el material vuelve a estar disponible')}catch(e){try{await db.collection('orders').doc(o.id).update({status:'cancelado'});shout('Pedido cancelado')}catch(x){shout('No se pudo cancelar')}}};
 const done=async o=>{if((codes[o.id]||'').trim().toUpperCase()!==o.code){shout('El código no coincide. Pídelo de nuevo al comprador');return}
 try{const b=db.batch();b.update(db.collection('orders').doc(o.id),{status:'completado'});b.update(db.collection('products').doc(o.productId),{status:'vendido'});await b.commit();shout('Entrega confirmada')}catch(e){shout('No se pudo confirmar la entrega')}};
 return <main className="max-w-4xl mx-auto px-4 py-8 space-y-10">
@@ -160,14 +163,14 @@ return <main className="max-w-4xl mx-auto px-4 py-8 space-y-10">
 <section><h2 className="font-display text-4xl mb-4">Mis ventas</h2>
 {sells.length?<div className="space-y-3">{sells.map(o=><div key={o.id} className="bg-white border border-linea rounded-2xl p-5"><div className="flex justify-between gap-3"><div><p className="font-medium">{o.title}</p><p className="text-sm text-ink/60">Comprador: {o.buyerName} · S/ {o.price}</p></div>{chip(o.status)}</div>
 <p className="text-sm mt-3 flex items-center gap-1"><I n="pin" s={15} c="text-guinda"/>{o.point} de {o.uni}, {o.hour} · {o.method}</p>
-{o.status==='pendiente'&&<div className="mt-3 flex gap-2 flex-wrap"><input value={codes[o.id]||''} onChange={e=>setCodes({...codes,[o.id]:e.target.value})} placeholder="Código del comprador" className="border border-linea rounded-xl px-3 py-2 flex-1 min-w-[10rem]"/><button onClick={()=>done(o)} className="bg-guinda text-white rounded-full px-5 py-2">Confirmar entrega</button></div>}</div>)}</div>:<Empty t="Aún no tienes ventas" d="Cuando alguien coordine contigo, verás el pedido aquí."/>}</section></main>}
+{o.status==='pendiente'&&<div className="mt-3 flex gap-2 flex-wrap"><input value={codes[o.id]||''} onChange={e=>setCodes({...codes,[o.id]:e.target.value})} placeholder="Código del comprador" className="border border-linea rounded-xl px-3 py-2 flex-1 min-w-[10rem]"/><button onClick={()=>done(o)} className="bg-guinda text-white rounded-full px-5 py-2">Confirmar entrega</button><button onClick={()=>cancel(o)} className="border border-linea rounded-full px-5 py-2 hover:bg-bruma">Rechazar</button></div>}</div>)}</div>:<Empty t="Aún no tienes ventas" d="Cuando alguien coordine contigo, verás el pedido aquí."/>}</section></main>}
 
 function Profile({uid,me,profile,items,ventas,open,go,shout}){
 const own=!!me&&uid===me.uid;const [pu,setPu]=useState(null);const [f,setF]=useState({name:'',uni:'',carrera:'',ciclo:''});
 useEffect(()=>{if(own){setF({name:profile.name||me.name,uni:profile.uni||'',carrera:profile.carrera||'',ciclo:profile.ciclo||''});return}db.collection('users').doc(uid).get().then(d=>setPu(d.exists?d.data():{name:'Estudiante'})).catch(()=>setPu({name:'Estudiante'}))},[uid]);
 const d=own?{...f,photo:me.photo,inst:me.inst}:pu;
 if(!d)return <main className="max-w-4xl mx-auto px-4 py-16 text-center text-ink/60">Cargando perfil...</main>;
-const mine=items.filter(p=>p.ownerId===uid&&(own||p.status!=='vendido'));
+const mine=items.filter(p=>p.ownerId===uid&&(own||(p.status!=='vendido'&&p.status!=='reservado')));
 const save=async e=>{e.preventDefault();try{await db.collection('users').doc(uid).set({name:norm(f.name)||me.name,uni:norm(f.uni),carrera:norm(f.carrera),ciclo:norm(f.ciclo)},{merge:true});shout('Perfil guardado')}catch(x){shout('No se pudo guardar')}};
 const del=p=>{if(window.confirm('¿Eliminar esta publicación?'))db.collection('products').doc(p.id).delete().catch(()=>shout('No se pudo eliminar'))};
 const inp="w-full border border-linea rounded-xl p-3 bg-white";
@@ -182,7 +185,7 @@ return <main className="max-w-4xl mx-auto px-4 py-8">
 <label><span className="font-medium block mb-1">Ciclo actual</span><input value={f.ciclo} onChange={e=>setF({...f,ciclo:e.target.value})} placeholder="Ej: VI" className={inp}/></label>
 <button className="sm:col-span-2 bg-guinda text-white rounded-full py-3 font-medium">Guardar perfil</button></form>}
 <h2 className="font-display text-3xl mt-10 mb-4">{own?'Tus publicaciones':'Publicaciones'}</h2>
-{mine.length?<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{mine.map(p=><div key={p.id}><Card p={p} open={open} ventas={ventas}/>{own&&<div className="flex items-center justify-between px-2 pt-1 text-sm"><span className="text-ink/60">{p.status==='vendido'?'Vendido':'Activo'}</span><button onClick={()=>del(p)} className="text-guinda underline underline-offset-4">Eliminar</button></div>}</div>)}</div>:<Empty t="Sin publicaciones" d={own?'Publica tu primer material en un minuto.':'Esta persona aún no publica nada.'} b={own&&'Publicar'} f={()=>go('sell')}/>}</main>}
+{mine.length?<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{mine.map(p=><div key={p.id}><Card p={p} open={open} ventas={ventas}/>{own&&<div className="flex items-center justify-between px-2 pt-1 text-sm"><span className="text-ink/60">{p.status==='vendido'?'Vendido':p.status==='reservado'?'Reservado':'Activo'}</span><button onClick={()=>del(p)} className="text-guinda underline underline-offset-4">Eliminar</button></div>}</div>)}</div>:<Empty t="Sin publicaciones" d={own?'Publica tu primer material en un minuto.':'Esta persona aún no publica nada.'} b={own&&'Publicar'} f={()=>go('sell')}/>}</main>}
 
 function Sell({me,profile,L,items,ventas,open,go,shout}){
 const empty={title:'',cat:'Libros',cond:'Bueno',price:'',course:'',ciclo:'I',uni:profile.uni||'',carrera:profile.carrera||'',desc:'',photo:''};
@@ -194,7 +197,9 @@ const pic=async e=>{const file=e.target.files[0];if(file)setF({...f,photo:await 
 const pub=async e=>{e.preventDefault();const t={...f,title:norm(f.title),uni:norm(f.uni),carrera:norm(f.carrera),course:norm(f.course),desc:norm(f.desc)};
 if(t.title.length<4||!(+t.price>0)||!t.uni||!t.carrera||!t.course){setErr('Completa título, precio, universidad, carrera y curso.');return}
 setErr('');setBusy(true);
-try{await db.collection('products').add({...t,price:+t.price,ownerId:me.uid,ownerName:me.name,ownerInst:!!me.inst,status:'activo',createdAt:TS()});shout('Publicado: ya lo ve todo el campus');setF({...empty,uni:t.uni,carrera:t.carrera})}catch(x){setErr('No se pudo publicar. Revisa que Firestore esté activado.')}setBusy(false)};
+try{const w=db.collection('products').add({...t,price:+t.price,ownerId:me.uid,ownerName:me.name,ownerInst:!!me.inst,status:'activo',createdAt:TS()});
+await Promise.race([w,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000))]);shout('Publicado: ya lo ven todos');setF({...empty,uni:t.uni,carrera:t.carrera})}
+catch(x){setErr(x.message==='timeout'?'No se guardó: no hay conexión con la base de datos. Revisa que Firestore esté creado y sus reglas publicadas.':x.code==='permission-denied'?'Las reglas de Firestore no permiten publicar. Falta pegar y publicar las reglas.':'No se pudo publicar ('+(x.code||x.message)+').')}setBusy(false)};
 const mine=items.filter(p=>p.ownerId===me.uid&&p.status!=='vendido');
 const inp="w-full border border-linea rounded-xl p-3 bg-white";
 const DL=({id,a})=><datalist id={id}>{a.map(x=><option key={x} value={x}/>)}</datalist>;
